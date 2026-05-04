@@ -92,6 +92,27 @@ A small floating orb appears at the bottom-center of your screen.
 
 > On first run, Vocero downloads the Whisper model (~500 MB for `small`). This only happens once — after that it works fully offline.
 
+## Hotkeys
+
+### F4 in tmux with Ghostty
+
+Ghostty reports `F4` as `ESC O S` (`kf4=\EOS`). If `F4` appears as repeated `[S` text inside CLI tools running under tmux, add this to `~/.tmux.conf`:
+
+```tmux
+set -g default-terminal "tmux-256color"
+set -g xterm-keys on
+set -as terminal-features ',xterm-ghostty:RGB'
+set -as terminal-overrides ',xterm-ghostty:kf4=\EOS'
+```
+
+Reload tmux if a server is already running:
+
+```bash
+tmux source-file ~/.tmux.conf
+```
+
+If no tmux server is running, the next tmux session will load the config automatically. Existing panes may need a fresh tmux session to pick up terminal changes.
+
 ## Configuration
 
 Configure via environment variables or a TOML file.
