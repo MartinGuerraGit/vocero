@@ -1,0 +1,33 @@
+[build-system]
+requires = ["hatchling>=1.25"]
+build-backend = "hatchling.build"
+
+[project]
+name = "vocero"
+version = "0.1.0"
+description = "Dictado por voz local, privado y ultrarrápido para Linux. Tu portavoz digital."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "PySide6>=6.7",
+  "faster-whisper>=1.0",
+  "numpy>=1.26",
+  "pynput>=1.7",
+  "sounddevice>=0.4.6",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.0",
+]
+
+[project.scripts]
+vocero = "vocero.app:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
