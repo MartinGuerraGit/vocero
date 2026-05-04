@@ -1,77 +1,102 @@
-# Vocero 🎙️
+# Vocero
 
-> Tu portavoz digital — dictado por voz local, privado y ultrarrápido para Linux
+> Your digital spokesperson — local, private, ultra-fast voice dictation for Linux
 
 [![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![faster-whisper](https://img.shields.io/badge/STT-faster--whisper-green.svg)](https://github.com/SYSTRAN/faster-whisper)
 
----
+**Vocero** is a floating push-to-talk dictation widget for Linux. Hold a hotkey, speak, release — your words appear wherever you're typing. Fully offline, fully private.
 
-**Vocero** is a floating push-to-talk dictation widget for Linux. Hold a hotkey, speak, release — and your words appear wherever you're typing. Fully offline, fully private.
+## Features
 
----
-
-## ¿Qué es Vocero? / What is Vocero?
-
-- **Floating widget** that sits on top of your desktop, visible only while you're dictating
-- **Push-to-talk**: hold hotkey → speak → release → text appears in your active app
-- **100% local/offline** powered by [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — zero cloud, zero latency
+- **Floating widget** that sits on top of your desktop, visible only while dictating
+- **Push-to-talk**: hold hotkey &rarr; speak &rarr; release &rarr; text appears in your active app
+- **100% local/offline** powered by [faster-whisper](https://github.com/SYSTRAN/faster-whisper) — no cloud, no network latency
 - **Privacy-first**: your voice never leaves your machine
-- **Direct typing** via ydotool, wtype, or xdotool into any application + clipboard fallback
-- **Optimized for speed**: pre-warmed model, greedy decoding (beam_size=1), temperature locked at 0.0, silence trimming
+- **Direct typing** via ydotool, wtype, or xdotool into any application (clipboard fallback)
+- **Optimized for speed**: pre-warmed model, greedy decoding (`beam_size=1`), temperature locked at 0.0, silence trimming
 
----
+## Requirements
 
-## Instalación / Installation
+- Python 3.11+
+- Linux (X11 or Wayland)
+- A working microphone
+- ~1 GB disk for the default `small` Whisper model (downloaded on first use)
 
-### Dependencias del sistema / System dependencies
+## Installation
+
+### 1. System dependencies
+
+Vocero needs PortAudio for microphone access and a text-input tool to type into other apps.
+
+**Debian / Ubuntu:**
 
 ```bash
-# Debian/Ubuntu
-sudo apt install build-essential xdotool portaudio19-dev
+sudo apt install build-essential portaudio19-dev xdotool
+```
 
-# Wayland users — optional but recommended for direct typing
+**Wayland users** — add these for native direct-typing support:
+
+```bash
 sudo apt install wtype ydotool
 ```
 
-### Instalación / Install
+**Fedora:**
 
 ```bash
-# Desde fuente (recomendado para desarrollo)
+sudo dnf install portaudio-devel xdotool gcc
+```
+
+### 2. Install Vocero
+
+```bash
 git clone https://github.com/tuusuario/vocero.git
 cd vocero
 python3 -m venv .venv
 source .venv/bin/activate
-pip install -e ".[dev]"
-
-# O via pip (próximamente)
-pip install vocero
+pip install -e .
 ```
 
-La primera transcripción descargará automáticamente el modelo Whisper seleccionado. Después de eso, Vocero funciona completamente offline.
+> For development (includes pytest): `pip install -e ".[dev]"`
 
----
-
-## Uso rápido / Quick start
+### 3. Verify
 
 ```bash
-vocero
-# o:
-python -m vocero
+python -c "import vocero; print(vocero.__name__)"
 ```
 
-Hotkey por defecto: **F4**
+If this prints `vocero`, you're ready.
 
-Mantené F4, hablá, soltá — el texto aparece donde estés escribiendo.
+## Running
 
----
+```bash
+source .venv/bin/activate
+vocero
+```
 
-## Configuración / Configuration
+Or without activating the venv:
 
-Vocero se configura mediante variables de entorno o archivo TOML.
+```bash
+.venv/bin/vocero
+```
 
-### Variables de entorno / Environment variables
+A small floating orb appears at the bottom-center of your screen.
+
+**Default hotkey: F4**
+
+1. Hold **F4**
+2. Speak
+3. Release **F4**
+4. Your words are typed into the focused application
+
+> On first run, Vocero downloads the Whisper model (~500 MB for `small`). This only happens once — after that it works fully offline.
+
+## Configuration
+
+Configure via environment variables or a TOML file.
+
+### Environment variables
 
 ```bash
 VOCERO_HOTKEY="<ctrl>+<shift>+d" vocero
@@ -80,7 +105,7 @@ VOCERO_AUTO_PASTE=false vocero
 VOCERO_LANGUAGE=en vocero
 ```
 
-### Archivo de configuración / Config file
+### Config file
 
 `~/.config/vocero/config.toml`:
 
@@ -91,104 +116,93 @@ auto_paste = true
 model_size = "small"      # tiny, base, small, medium, large-v3
 device = "cpu"
 compute_type = "int8"     # int8, int8_float16, float16
-language = "es"            # null o "auto" para detección automática
-cpu_threads = 0            # 0 = detección automática por CTranslate2
+language = "es"           # null or "auto" for automatic detection
+cpu_threads = 0           # 0 = auto-detect by CTranslate2
 paste_delay_ms = 250
 ```
 
-| Opción | Variable de entorno | Default | Descripción |
-|--------|-------------------|---------|-------------|
-| `hotkey` | `VOCERO_HOTKEY` | `<f4>` | Tecla de push-to-talk |
-| `auto_paste` | `VOCERO_AUTO_PASTE` | `true` | Pegar automáticamente tras transcribir |
-| `model_size` | `VOCERO_MODEL` | `small` | Tamaño del modelo Whisper |
-| `device` | `VOCERO_DEVICE` | `cpu` | Dispositivo de inferencia |
-| `compute_type` | `VOCERO_COMPUTE_TYPE` | `int8` | Precisión de cómputo |
-| `language` | `VOCERO_LANGUAGE` | `null` | Idioma (`"es"`, `"en"`, `null` para auto) |
-| `sample_rate` | `VOCERO_SAMPLE_RATE` | `16000` | Frecuencia de muestreo de audio |
-| `cpu_threads` | `VOCERO_CPU_THREADS` | `0` | Threads de CPU (0 = auto) |
-| `paste_delay_ms` | `VOCERO_PASTE_DELAY_MS` | `250` | Delay antes del pegado |
-| `config_path` | `VOCERO_CONFIG` | `~/.config/vocero/config.toml` | Ruta del archivo de configuración |
+| Option | Environment variable | Default | Description |
+|--------|---------------------|---------|-------------|
+| `hotkey` | `VOCERO_HOTKEY` | `<f4>` | Push-to-talk key |
+| `auto_paste` | `VOCERO_AUTO_PASTE` | `true` | Auto-paste after transcription |
+| `model_size` | `VOCERO_MODEL` | `small` | Whisper model size |
+| `device` | `VOCERO_DEVICE` | `cpu` | Inference device |
+| `compute_type` | `VOCERO_COMPUTE_TYPE` | `int8` | Compute precision |
+| `language` | `VOCERO_LANGUAGE` | `null` | Language (`"es"`, `"en"`, `null` for auto) |
+| `sample_rate` | `VOCERO_SAMPLE_RATE` | `16000` | Audio sample rate |
+| `cpu_threads` | `VOCERO_CPU_THREADS` | `0` | CPU threads (0 = auto) |
+| `paste_delay_ms` | `VOCERO_PASTE_DELAY_MS` | `250` | Delay before paste |
+| `config_path` | `VOCERO_CONFIG` | `~/.config/vocero/config.toml` | Config file path |
 
----
+## Linux behavior
 
-## Comportamiento en Linux / Linux behavior
+### Text insertion
 
-### Pegado / Paste
+Vocero tries to insert text directly into the active application using the best available method:
 
-Vocero intenta insertar texto directamente en la aplicación activa:
+1. **ydotool** — preferred, works on both X11 and Wayland
+2. **wtype** — Wayland sessions
+3. **xdotool type** — X11 sessions
+4. **Ctrl+V** — fallback via xdotool/wtype
+5. **Clipboard** — last resort, text is copied for manual paste
 
-1. **ydotool** — primera opción, funciona en X11 y Wayland
-2. **wtype** — en sesiones Wayland
-3. **xdotool type** — en sesiones X11
-4. **Ctrl+V** — fallback vía xdotool/wtype
-5. **Portapapeles** — último recurso, el texto queda copiado para pegado manual
+If auto-paste fails, text remains in your clipboard for manual pasting.
 
-Si el pegado automático falla, el texto queda en el portapapeles y podés pegarlo manualmente.
+### Global hotkeys
 
-### Hotkeys globales / Global hotkeys
+Global hotkeys work best on X11 via `pynput`. On Wayland, some compositors may restrict global key listening.
 
-Las hotkeys globales funcionan mejor en X11 vía `pynput`. En Wayland, algunos compositores pueden restringir la escucha global de teclas.
+> **Wayland note:** If the hotkey doesn't work under your Wayland compositor, try running Vocero under XWayland or configure a global shortcut in your window manager.
 
-> **Nota Wayland:** Si la hotkey no funciona bajo tu compositor Wayland, probá ejecutar Vocero bajo XWayland o configurá un atajo global en tu window manager.
+## Why Vocero?
 
----
-
-## ¿Por qué Vocero? / Why Vocero?
-
-### vs. dictado en la nube / cloud dictation
+### vs. cloud dictation
 
 | | Vocero | Cloud (Whisper API, etc.) |
 |---|---|---|
-| **Privacidad** | Tu voz nunca sale de tu máquina | Audio enviado a servidores |
-| **Internet** | No requiere conexión | Requiere internet |
-| **Costo** | Gratis, sin suscripción | Pago por uso |
-| **Latencia** | Local, inmediata | Depende de la red |
+| **Privacy** | Voice never leaves your machine | Audio sent to servers |
+| **Internet** | No connection required | Requires internet |
+| **Cost** | Free, no subscription | Pay per use |
+| **Latency** | Local, immediate | Network-dependent |
 
-### vs. faster-whisper sin optimizar / stock faster-whisper
+### vs. stock faster-whisper
 
-- **Modelo pre-calentado**: sin espera al iniciar una transcripción
-- **Decodificación greedy**: beam_size=1, más rápido que beam search
-- **Temperatura bloqueada en 0.0**: evita el costoso loop de reintentos con fallback
-- **Trimming de silencio**: recorta audio antes de transcribir
-- **~2-3x más rápido** que faster-whisper sin tuning
+- **Pre-warmed model**: no startup delay per transcription
+- **Greedy decoding**: `beam_size=1`, faster than beam search
+- **Temperature locked at 0.0**: avoids costly retry loop with fallback temperatures
+- **Silence trimming**: trims audio before transcription
+- **~2-3x faster** than untuned faster-whisper
 
-### vs. otras herramientas locales / other local tools
+### vs. other local tools
 
-- **Widget flotante**: no necesitás cambiar de ventana para dictar
-- **Inserción directa**: tipea en cualquier app, no solo pega
-- **Soporte Wayland**: ydotool y wtype para Wayland nativo
-- **Idioma español por defecto**: pensado para hispanohablantes
+- **Floating widget**: no window switching needed to dictate
+- **Direct insertion**: types into any app, not just paste
+- **Wayland support**: ydotool and wtype for native Wayland
+- **Spanish by default**: built with Spanish speakers in mind
 
----
-
-## Desarrollo / Development
+## Development
 
 ```bash
-# Clonar e instalar dependencias de desarrollo
 git clone https://github.com/tuusuario/vocero.git
 cd vocero
 python3 -m venv .venv
 source .venv/bin/activate
 pip install -e ".[dev]"
 
-# Ejecutar tests
+# Run tests
 python -m pytest
 ```
 
----
+## License
 
-## Licencia / License
+MIT — do what you want, just keep the copyright notice.
 
-MIT — hacé lo que quieras, solo mantené el aviso de copyright.
+## Contributing
 
----
+PRs welcome. Open an issue to discuss large changes before submitting.
 
-## Contribuir / Contributing
-
-PRs bienvenidas. Abrí un issue para discutir cambios grandes antes de mandar PR.
-
-1. Fork el repo
-2. Creá tu branch (`git checkout -b feature/nombre`)
-3. Commit changes (`git commit -m 'feat: agrego X'`)
-4. Push (`git push origin feature/nombre`)
-5. Abrí un Pull Request
+1. Fork the repo
+2. Create your branch (`git checkout -b feature/name`)
+3. Commit changes (`git commit -m 'feat: add X'`)
+4. Push (`git push origin feature/name`)
+5. Open a Pull Request
